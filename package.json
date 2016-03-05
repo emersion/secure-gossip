@@ -1,0 +1,20 @@
+{
+  "name": "secure-gossip",
+  "description": "distributed, secure, transport agnostic message gossip protocol",
+  "version": "0.0.0",
+  "repository": {
+    "url": "git://github.com/noffle/secure-gossip.git"
+  },
+  "main": "index.js",
+  "scripts": {
+    "test": "tape test/*.js"
+  },
+  "dependencies": {
+    "debug": "^2.2.0",
+    "readable-stream": "^2.0.5",
+    "ssb-keys": "^4.0.10"
+  },
+  "devDependencies": {
+    "tape": "*"
+  }
+}
