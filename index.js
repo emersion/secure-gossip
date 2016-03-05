@@ -13,25 +13,25 @@ function clone (obj) {
   return _obj
 }
 
-function Gossip (keys, opts) {
-  if (!(this instanceof Gossip)) { return new Gossip(keys, opts) }
-
-  if (!keys) { keys = ssbkeys.generate() }
+function Gossip (opts) {
+  if (!(this instanceof Gossip)) { return new Gossip(opts) }
 
   opts = opts || {}
+
+  if (!opts.keys) { opts.keys = ssbkeys.generate() }
 
   var interval = opts.interval || 100
 
   EventEmitter.call(this)
 
-  this.keys = keys
+  this.keys = opts.keys
   this.store = []
   this.peers = []
   this.seq = 0
 
   this.seqs = {}
 
-  this.interval = setInterval(this.gossip.bind(this), interval)
+  this.interval = interval === -1 ? null : setInterval(this.gossip.bind(this), interval)
 }
 
 Gossip.prototype.createPeerStream = function () {
@@ -92,7 +92,9 @@ Gossip.prototype.gossip = function () {
 }
 
 Gossip.prototype.stop = function () {
-  clearInterval(this.interval)
+  if (this.interval) {
+    clearInterval(this.interval)
+  }
 }
 
 util.inherits(Gossip, EventEmitter)
