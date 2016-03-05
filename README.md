@@ -2,8 +2,8 @@
 
 > Secure, transport agnostic, message gossip protocol.
 
-Peers publish messages, which eventually propogate out to the entire network
-using rounds of gossip between pairs of peers.
+Any peer in the network can publish messages, which will eventually propogate
+out to the entire network via rounds of gossip between each node's peers.
 
 ## Security
 
