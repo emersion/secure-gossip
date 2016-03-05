@@ -1,4 +1,4 @@
-var Gossip = require('./gossip')
+var Gossip = require('./index')
 
 var peer1 = Gossip()
 var peer2 = Gossip()

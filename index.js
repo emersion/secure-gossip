@@ -4,6 +4,15 @@ var Duplex = require('readable-stream').Duplex
 var EventEmitter = require('events')
 var util = require('util')
 
+function clone (obj) {
+  var _obj = {}
+  for(var k in obj) {
+    if(Object.hasOwnProperty.call(obj, k))
+      _obj[k] = obj[k]
+  }
+  return _obj
+}
+
 function Gossip (keys, opts) {
   if (!(this instanceof Gossip)) { return new Gossip(keys, opts) }
 
@@ -22,7 +31,7 @@ function Gossip (keys, opts) {
 
   this.seqs = {}
 
-  setInterval(this.gossip.bind(this), interval)
+  this.interval = setInterval(this.gossip.bind(this), interval)
 }
 
 Gossip.prototype.createPeerStream = function () {
@@ -38,12 +47,14 @@ Gossip.prototype.createPeerStream = function () {
     write: function (chunk, enc, next) {
       if (chunk.public === self.keys.public) {
         debug('got one of my own messages; discarding')
-      } else if (ssbkeys.verifyObj(chunk, chunk)) {
+      } else if (ssbkeys.verifyObj(chunk, chunk.data)) {
         if (self.seqs[chunk.public] === undefined || self.seqs[chunk.public] < chunk.seq) {
           self.seqs[chunk.public] = chunk.seq
           self.store.push(chunk)
           debug('current seq for', chunk.public, 'is', self.seqs[chunk.public])
-          self.emit('message', chunk.data)
+          var copy = clone(chunk.data)
+          delete copy.signature
+          self.emit('message', copy)
         } else {
           debug('old gossip; discarding')
         }
@@ -60,9 +71,12 @@ Gossip.prototype.createPeerStream = function () {
 }
 
 Gossip.prototype.publish = function (msg) {
-  msg.public = this.keys.public
-  msg.seq = this.seq++
-  msg = ssbkeys.signObj(this.keys, msg)
+  var data = msg
+  msg = {
+    data: ssbkeys.signObj(this.keys, data),
+    public: this.keys.public,
+    seq: this.seq++,
+  }
 
   this.store.push(msg)
 }
@@ -75,6 +89,10 @@ Gossip.prototype.gossip = function () {
   }
 
   this.store = []
+}
+
+Gossip.prototype.stop = function () {
+  clearInterval(this.interval)
 }
 
 util.inherits(Gossip, EventEmitter)
