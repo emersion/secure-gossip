@@ -39,18 +39,18 @@ Gossip.prototype.createPeerStream = function () {
 
   var stream = new Duplex({
 
-    objectMode: true,
-
     read: function (n) {
     },
 
-    write: function (chunk, enc, next) {
+    write: function (rawChunk, enc, next) {
+      var chunk = JSON.parse(rawChunk.toString())
+
       if (chunk.public === self.keys.public) {
         debug('got one of my own messages; discarding')
       } else if (ssbkeys.verifyObj(chunk, chunk.data)) {
         if (self.seqs[chunk.public] === undefined || self.seqs[chunk.public] < chunk.seq) {
           self.seqs[chunk.public] = chunk.seq
-          self.store.push(chunk)
+          self.store.push(rawChunk)
           debug('current seq for', chunk.public, 'is', self.seqs[chunk.public])
           var copy = clone(chunk.data)
           delete copy.signature
@@ -78,7 +78,7 @@ Gossip.prototype.publish = function (msg) {
     seq: this.seq++,
   }
 
-  this.store.push(msg)
+  this.store.push(new Buffer(JSON.stringify(msg)))
 }
 
 Gossip.prototype.gossip = function () {
