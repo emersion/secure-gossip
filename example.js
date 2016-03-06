@@ -5,11 +5,13 @@ var peer2 = Gossip()
 var peer3 = Gossip()
 
 var p1 = peer1.createPeerStream()
-var p2 = peer2.createPeerStream()
+var p2_1 = peer2.createPeerStream()
+var p2_2 = peer2.createPeerStream()
 var p3 = peer3.createPeerStream()
 
-p1.pipe(p2).pipe(p1)
-p1.pipe(p3).pipe(p1)
+// 3 peers in a line, with peer-2 in the middle
+p1.pipe(p2_1).pipe(p1)
+p2_2.pipe(p3).pipe(p2_2)
 
 var msg = {
   data: 'hello warld'
