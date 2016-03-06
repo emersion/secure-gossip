@@ -1,5 +1,6 @@
 var gossip = require('../index')
 var tap = require('tap')
+var block = require('block-stream2')
 
 tap.test('3 peers in a line', function (t) {
   t.plan(2)
@@ -14,7 +15,7 @@ tap.test('3 peers in a line', function (t) {
   var p3 = peer3.createPeerStream()
 
   p1.pipe(p21).pipe(p1)
-  p22.pipe(p3).pipe(p22)
+  p3.pipe(p22).pipe(p3)
 
   var msg = {
     data: 'hello warld'
@@ -106,5 +107,39 @@ tap.test('4 peers in a loop', function (t) {
     peer2.stop()
     peer3.stop()
     peer4.stop()
+  })
+})
+
+tap.test('2 peers with stream breaks', function (t) {
+  t.plan(2)
+
+  var peer1 = gossip()
+  var peer2 = gossip()
+
+  var p1 = peer1.createPeerStream()
+  var p2 = peer2.createPeerStream()
+
+  p1.pipe(block(5)).pipe(p2).pipe(p1)
+
+  var original = {
+    data: 'gosh I really hope this packet arrives in one piece!'
+  }
+
+  peer1.publish(original)
+
+  var p1c = 0
+
+  peer2.on('message', function (msg) {
+    t.equal(p1c++, 0)
+    t.deepEqual(msg, original)
+  })
+
+  peer1.on('message', function (msg) {
+    t.fail('peer1 saw their own message!')
+  })
+
+  t.tearDown(function() {
+    peer1.stop()
+    peer2.stop()
   })
 })
