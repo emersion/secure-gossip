@@ -143,3 +143,35 @@ tap.test('2 peers with stream breaks', function (t) {
     peer2.stop()
   })
 })
+
+tap.test('broken connection', function (t) {
+  var peer1 = gossip()
+  var peer2 = gossip()
+
+  var p1 = peer1.createPeerStream()
+  var p2 = peer2.createPeerStream()
+
+  p1.pipe(p2).pipe(p1)
+
+  var original = {
+    data: 'bust'
+  }
+
+  peer1.publish(original)
+
+  var p1c = 0
+
+  peer2.on('message', function (msg) {
+    p2.end()
+    t.done()
+  })
+
+  peer1.on('message', function (msg) {
+    t.fail('peer1 saw their own message!')
+  })
+
+  t.tearDown(function() {
+    peer1.stop()
+    peer2.stop()
+  })
+})

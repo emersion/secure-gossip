@@ -45,25 +45,29 @@ Gossip.prototype.createPeerStream = function () {
     },
 
     write: function (rawChunk, enc, next) {
-      var chunk = JSON.parse(rawChunk)
+      try {
+        var chunk = JSON.parse(rawChunk)
 
-      if (chunk.public === self.keys.public) {
-        debug('got one of my own messages; discarding')
-      } else if (ssbkeys.verifyObj(chunk, chunk.data)) {
-        if (self.seqs[chunk.public] === undefined || self.seqs[chunk.public] < chunk.seq) {
-          self.seqs[chunk.public] = chunk.seq
-          self.store.push(rawChunk + '\n')
-          debug('current seq for', chunk.public, 'is', self.seqs[chunk.public])
-          var copy = clone(chunk.data)
-          delete copy.signature
-          self.emit('message', copy)
+        if (chunk.public === self.keys.public) {
+          debug('got one of my own messages; discarding')
+        } else if (ssbkeys.verifyObj(chunk, chunk.data)) {
+          if (self.seqs[chunk.public] === undefined || self.seqs[chunk.public] < chunk.seq) {
+            self.seqs[chunk.public] = chunk.seq
+            self.store.push(rawChunk + '\n')
+            debug('current seq for', chunk.public, 'is', self.seqs[chunk.public])
+            var copy = clone(chunk.data)
+            delete copy.signature
+            self.emit('message', copy)
+          } else {
+            debug('old gossip; discarding')
+          }
         } else {
-          debug('old gossip; discarding')
+          debug('received message with bad signature! discarding')
         }
-      } else {
-        debug('received message with bad signature! discarding')
+        next()
+      } catch (e) {
+        debug('bad json (or end of stream)')
       }
-      next()
     }
   })
 
