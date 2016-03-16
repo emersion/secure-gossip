@@ -15,6 +15,8 @@ function clone (obj) {
   return _obj
 }
 
+util.inherits(Gossip, EventEmitter)
+
 function Gossip (opts) {
   if (!(this instanceof Gossip)) { return new Gossip(opts) }
 
@@ -104,7 +106,5 @@ Gossip.prototype.stop = function () {
     clearInterval(this.interval)
   }
 }
-
-util.inherits(Gossip, EventEmitter)
 
 module.exports = Gossip
